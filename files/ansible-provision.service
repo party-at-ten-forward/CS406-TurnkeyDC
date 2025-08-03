@@ -11,6 +11,8 @@ ExecStart=/usr/bin/ansible-playbook /opt/ansible-dev/configure_bootstr_network.y
 ExecStartPost=/bin/rm -f /etc/systemd/system/ansible-provision.service
 ExecStartPost=/bin/systemctl daemon-reload
 RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
