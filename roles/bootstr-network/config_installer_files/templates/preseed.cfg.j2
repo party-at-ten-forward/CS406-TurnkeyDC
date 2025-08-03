@@ -20,7 +20,7 @@ d-i passwd/root-login boolean false
 d-i passwd/user-fullname string System User
 d-i passwd/username string piyer
 # Password: mysecurepassword
-d-i passwd/user-password-crypted password {{ preseed_password_crypted }}
+d-i passwd/user-password-crypted password $6$xuYSuLIEiutAYV8P$aKnXTvKJg5E.R2FLblfXeahlXp/hnWWvJOrZ8VdJNQmRcQln1wpqZIV7o72ZgOQb.XuzU90ypjEShRFeGiZ8P/
 d-i user-setup/allow-password-weak boolean true
 ### Clock and time zone setup
 d-i clock-setup/utc boolean true
@@ -41,6 +41,15 @@ popularity-contest popularity-contest/participate boolean false
 ### Boot loader installation
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/bootdev string default
+### Post-installation hostname fix
+d-i preseed/late_command string \
+    echo "compute" > /target/etc/hostname; \
+    sed -i '/127.0.1.1/d' /target/etc/hosts; \
+    echo "127.0.1.1 compute.home compute" >> /target/etc/hosts; \
+    echo "127.0.0.1 localhost" > /target/etc/hosts.new; \
+    echo "127.0.1.1 compute.home compute" >> /target/etc/hosts.new; \
+    mv /target/etc/hosts.new /target/etc/hosts; \
+    in-target systemctl enable systemd-hostnamed
 ### Finishing up
 d-i finish-install/reboot_in_progress note
 d-i debian-installer/exit/halt boolean false
