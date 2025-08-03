@@ -1,13 +1,13 @@
 [Unit]
 Description=Run Ansible Playbook at First Boot
-After=network-online.target
+After=network-online.target local-fs.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
 User=root
 Group=root
-ExecStart=/usr/bin/ansible-playbook /root/ansible-dev/configure_bootstr_network.yml > /root/ansible-provision.log 2>&1
+ExecStart=/usr/bin/ansible-playbook /opt/ansible-dev/configure_bootstr_network.yml > /var/log/ansible-provision.log 2>&1
 ExecStartPost=/bin/rm -f /etc/systemd/system/ansible-provision.service
 ExecStartPost=/bin/systemctl daemon-reload
 RemainAfterExit=yes
