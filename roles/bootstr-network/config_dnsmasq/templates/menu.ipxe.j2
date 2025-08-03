@@ -1,0 +1,21 @@
+#!ipxe
+
+# Set variables
+set base-url http://10.10.10.1
+set debian-installer ${base-url}/debian-installer/amd64
+
+# Main menu with 5 second timeout
+menu iPXE Boot Menu - Debian Installation
+item --default debian-install Install Debian 12 (Bookworm)
+item local Boot from local disk
+choose --timeout 5000 target || goto debian-install
+
+# Debian standard installation
+:debian-install
+kernel ${debian-installer}/linux auto=true priority=critical interface=auto netcfg/dhcp_timeout=120 console-setup/layoutcode=us preseed/url=${base-url}/autoinstall/preseed.cfg
+initrd ${debian-installer}/initrd.gz
+boot
+
+# Boot from local disk
+:local
+sanboot --no-describe --drive 0x80

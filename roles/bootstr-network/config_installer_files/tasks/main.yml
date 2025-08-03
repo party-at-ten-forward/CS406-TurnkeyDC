@@ -1,0 +1,63 @@
+- name: Ensure provisioning directory exists
+  ansible.builtin.file:
+    path: /var/www/provisioning
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Download Debian netboot installer
+  ansible.builtin.get_url:
+    url: https://deb.debian.org/debian/dists/bookworm/main/installer-amd64/current/images/netboot/netboot.tar.gz
+    dest: /var/www/provisioning/netboot.tar.gz
+    mode: '0644'
+
+- name: Extract netboot installer
+  ansible.builtin.unarchive:
+    src: /var/www/provisioning/netboot.tar.gz
+    dest: /var/www/provisioning/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Remove unnecessary files from provisioning
+  ansible.builtin.file:
+    path: "/var/www/provisioning/{{ item }}"
+    state: absent
+  loop:
+    - ldlinux.c32
+    - pxelinux.0
+    - pxelinux.cfg
+    - pxelinux.sys
+    - splash.png
+    - version.info
+    - netboot.tar.gz
+
+- name: Ensure autoinstall directory exists
+  ansible.builtin.file:
+    path: /var/www/provisioning/autoinstall
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Generate preseed password hash
+  ansible.builtin.command: openssl passwd -6 'Password.123'
+  register: preseed_password_hash
+  changed_when: false
+
+- name: Deploy preseed.cfg
+  ansible.builtin.template:
+    src: preseed.cfg.j2
+    dest: /var/www/provisioning/autoinstall/preseed.cfg
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    preseed_password_crypted: "{{ preseed_password_hash.stdout }}"
+
+- name: Restart nginx after installer setup
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted

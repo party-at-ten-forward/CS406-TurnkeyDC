@@ -1,0 +1,71 @@
+- name: Gather hostname
+  ansible.builtin.command: hostname
+  register: hostname_result
+  changed_when: false
+
+- name: Test internet connectivity (ping google.com)
+  ansible.builtin.command: ping -c 2 google.com
+  register: ping_result
+  ignore_errors: yes
+  changed_when: false
+
+- name: Check nginx provisioning config
+  stat:
+    path: /etc/nginx/sites-available/provisioning
+  register: nginx_prov
+
+- name: Check nginx index.html
+  stat:
+    path: /var/www/provisioning/index.html
+  register: nginx_index
+
+- name: Check dnsmasq config
+  stat:
+    path: /etc/dnsmasq.conf
+  register: dnsmasq_conf
+
+- name: Check iPXE binary
+  stat:
+    path: /var/lib/tftpboot/ipxe.pxe
+  register: ipxe_bin
+
+- name: Check iPXE menu
+  stat:
+    path: /var/lib/tftpboot/menu.ipxe
+  register: ipxe_menu
+
+- name: Check preseed.cfg
+  stat:
+    path: /var/www/provisioning/autoinstall/preseed.cfg
+  register: preseed_cfg
+
+- name: Get service facts
+  service_facts:
+
+- name: Build checklist content
+  set_fact:
+    checkout_manifest: |
+      Bootstrap/Provisioning Node Checklist
+      =====================================
+      Hostname: {{ hostname_result.stdout }}
+      Internet connectivity: {{ 'OK' if ping_result.rc == 0 else 'FAILED' }}
+      nginx provisioning config: {{ 'OK' if nginx_prov.stat.exists else 'MISSING' }}
+      nginx index.html: {{ 'OK' if nginx_index.stat.exists else 'MISSING' }}
+      dnsmasq config: {{ 'OK' if dnsmasq_conf.stat.exists else 'MISSING' }}
+      iPXE binary: {{ 'OK' if ipxe_bin.stat.exists else 'MISSING' }}
+      iPXE menu: {{ 'OK' if ipxe_menu.stat.exists else 'MISSING' }}
+      preseed.cfg: {{ 'OK' if preseed_cfg.stat.exists else 'MISSING' }}
+      nginx running: {{ (services['nginx.service'].state == 'running') | ternary('YES', 'NO') if 'nginx.service' in services else 'UNKNOWN' }}
+      dnsmasq running: {{ (services['dnsmasq.service'].state == 'running') | ternary('YES', 'NO') if 'dnsmasq.service' in services else 'UNKNOWN' }}
+
+- name: Print formatted checklist
+  debug:
+    msg: "{{ checkout_manifest }}"
+
+- name: Write checklist to file
+  copy:
+    dest: /var/log/bootstrap_checkout.txt
+    content: "{{ checkout_manifest }}"
+    owner: root
+    group: root
+    mode: '0644'

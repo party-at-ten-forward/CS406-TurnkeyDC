@@ -1,0 +1,27 @@
+- name: Copy netplan config
+  template:
+    src: netplan-cfg.yaml.j2
+    dest: /etc/netplan/01-netcfg.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Apply netplan configuration (suppress warnings)
+  ansible.builtin.shell: netplan apply 2>/dev/null
+  become: yes
+
+- name: Restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+    enabled: yes
+
+- name: Test connectivity to google.com
+  ansible.builtin.shell: ping -c 2 google.com
+  register: ping_result
+  ignore_errors: yes
+  changed_when: false
+
+- name: Show ping result
+  debug:
+    var: ping_result.stdout

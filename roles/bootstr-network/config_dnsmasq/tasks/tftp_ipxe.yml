@@ -1,0 +1,23 @@
+- name: Ensure TFTP root directory exists
+  ansible.builtin.file:
+    path: /var/lib/tftpboot
+    state: directory
+    owner: nobody
+    group: nogroup
+    mode: '0755'
+
+- name: Download iPXE binary
+  ansible.builtin.get_url:
+    url: https://boot.ipxe.org/ipxe.pxe
+    dest: /var/lib/tftpboot/ipxe.pxe
+    mode: '0644'
+    owner: nobody
+    group: nogroup
+
+- name: Create iPXE menu
+  ansible.builtin.template:
+    src: menu.ipxe.j2
+    dest: /var/lib/tftpboot/menu.ipxe
+    owner: nobody
+    group: nogroup
+    mode: '0644'

@@ -1,0 +1,13 @@
+---
+- name: Configure bootstrap/network node
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: bootstr-network/config_interfaces
+    - role: bootstr-network/config_routing_nat_rules
+    - role: bootstr-network/config_dnsmasq
+    - role: bootstr-network/config_nginx
+    - role: bootstr-network/config_installer_files
+    - role: bootstr-network/checkout

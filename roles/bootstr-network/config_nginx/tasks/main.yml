@@ -1,0 +1,59 @@
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Deploy nginx provisioning site config
+  ansible.builtin.template:
+    src: provisioning.j2
+    dest: /etc/nginx/sites-available/provisioning
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create nginx index.html
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/provisioning/index.html
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable provisioning site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/provisioning
+    dest: /etc/nginx/sites-enabled/provisioning
+    state: link
+    force: yes
+
+- name: Remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Restart nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+
+- name: Test nginx HTTP response on IP
+  ansible.builtin.uri:
+    url: http://10.10.10.1
+    return_content: yes
+  register: nginx_test_ip
+
+- name: Show nginx response for IP
+  debug:
+    var: nginx_test_ip.content
+
+- name: Test nginx HTTP response on hostname
+  ansible.builtin.uri:
+    url: http://bootstr-network
+    return_content: yes
+  register: nginx_test_hostname
+  ignore_errors: yes
+
+- name: Show nginx response for hostname
+  debug:
+    var: nginx_test_hostname.content

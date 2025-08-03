@@ -1,0 +1,19 @@
+# Interface configs
+interface=br0
+bind-interfaces
+# DHCP and DNS
+listen-address=10.10.10.1
+dhcp-range=10.10.10.100,10.10.10.200,12h
+dhcp-option=3,10.10.10.1
+dhcp-option=6,10.10.10.1
+domain-needed
+bogus-priv
+domain=home
+expand-hosts
+dhcp-authoritative
+# TFTP and PXE w/ iPXE
+dhcp-userclass=set:ipxe,iPXE
+dhcp-boot=tag:!ipxe,ipxe.pxe
+dhcp-boot=tag:ipxe,menu.ipxe
+enable-tftp
+tftp-root=/var/lib/tftpboot

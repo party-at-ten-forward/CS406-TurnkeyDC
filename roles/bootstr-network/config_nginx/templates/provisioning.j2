@@ -1,0 +1,22 @@
+server {
+    listen 80;
+    server_name 10.10.10.1 bootstr-network;
+    root /var/www/provisioning;
+    index index.html;
+    # Allow large file uploads (for ISO files)
+    client_max_body_size 1G;
+    # Serve Debian installer files
+    location /debian-installer/ {
+        alias /var/www/provisioning/debian-installer/;
+        autoindex on;
+    }
+    # Serve autoinstall files
+    location /autoinstall/ {
+        alias /var/www/provisioning/autoinstall/;
+        autoindex on;
+    }
+    # Default location
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
