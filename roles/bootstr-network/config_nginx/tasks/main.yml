@@ -12,6 +12,14 @@
     group: root
     mode: '0644'
 
+- name: Ensure provisioning directory exists
+  ansible.builtin.file:
+    path: /var/www/provisioning
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Create nginx index.html
   ansible.builtin.template:
     src: index.html.j2
