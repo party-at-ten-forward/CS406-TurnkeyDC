@@ -5,6 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+User=root
+Group=root
 ExecStart=/usr/bin/ansible-playbook /root/ansible-dev/configure_bootstr_network.yml > /root/ansible-provision.log 2>&1
 ExecStartPost=/bin/rm -f /etc/systemd/system/ansible-provision.service
 ExecStartPost=/bin/systemctl daemon-reload
