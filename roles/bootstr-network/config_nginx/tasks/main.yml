@@ -59,6 +59,7 @@
   ansible.builtin.uri:
     url: http://bootstr-network
     return_content: yes
+    validate_certs: no
   register: nginx_test_hostname
   ignore_errors: yes
 
