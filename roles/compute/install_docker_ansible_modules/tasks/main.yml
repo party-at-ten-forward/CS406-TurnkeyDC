@@ -7,9 +7,12 @@
     DEBIAN_FRONTEND: noninteractive
 
 - name: Install Docker Python library
-  ansible.builtin.pip:
-    name: docker
+  ansible.builtin.apt:
+    name: python3-docker
     state: present
+    update_cache: yes
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
 - name: Install community.docker Ansible collection
   ansible.builtin.command:
