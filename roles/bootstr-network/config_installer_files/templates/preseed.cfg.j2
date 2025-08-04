@@ -41,7 +41,7 @@ popularity-contest popularity-contest/participate boolean false
 ### Boot loader installation
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/bootdev string default
-### Post-installation hostname fix
+### Post-installation hostname fix and compute provision setup
 d-i preseed/late_command string \
     echo "compute" > /target/etc/hostname; \
     sed -i '/127.0.1.1/d' /target/etc/hosts; \
@@ -49,7 +49,27 @@ d-i preseed/late_command string \
     echo "127.0.0.1 localhost" > /target/etc/hosts.new; \
     echo "127.0.1.1 compute.home compute" >> /target/etc/hosts.new; \
     mv /target/etc/hosts.new /target/etc/hosts; \
-    in-target systemctl enable systemd-hostnamed
+    in-target systemctl enable systemd-hostnamed; \
+    echo '[Unit]' > /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'Description=Compute Node Ansible Configuration on First Boot' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'After=network-online.target systemd-resolved.service local-fs.target' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'Wants=network-online.target' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo '' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo '[Service]' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'Type=oneshot' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'User=root' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'Group=root' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'ExecStart=/bin/bash -c "set -e; echo \"[\$(date)] Starting compute provision process...\" >> /var/log/ansible-compute-provision.log 2>&1; echo \"[\$(date)] Installing git and ansible...\" >> /var/log/ansible-compute-provision.log 2>&1; apt update >> /var/log/ansible-compute-provision.log 2>&1; DEBIAN_FRONTEND=noninteractive apt install -y git ansible >> /var/log/ansible-compute-provision.log 2>&1; echo \"[\$(date)] Cloning repository...\" >> /var/log/ansible-compute-provision.log 2>&1; cd /opt && git clone https://github.com/party-at-ten-forward/CS406-TurnkeyDC.git >> /var/log/ansible-compute-provision.log 2>&1; echo \"[\$(date)] Running compute ansible playbook...\" >> /var/log/ansible-compute-provision.log 2>&1; cd /opt/CS406-TurnkeyDC && ansible-playbook configure_compute.yml -v >> /var/log/ansible-compute-provision.log 2>&1; echo \"[\$(date)] Compute provision completed successfully!\" >> /var/log/ansible-compute-provision.log 2>&1"' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'ExecStartPost=/bin/bash -c "if [ \$? -eq 0 ]; then echo \"[\$(date)] Cleaning up service...\" >> /var/log/ansible-compute-provision.log 2>&1; rm -f /etc/systemd/system/ansible-compute-provision.service; systemctl daemon-reload; else echo \"[\$(date)] Compute provision failed, keeping service for debugging\" >> /var/log/ansible-compute-provision.log 2>&1; fi"' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'RemainAfterExit=yes' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'StandardOutput=journal' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'StandardError=journal' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo '' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo '[Install]' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    echo 'WantedBy=multi-user.target' >> /target/etc/systemd/system/ansible-compute-provision.service; \
+    in-target systemctl enable ansible-compute-provision.service; \
+    touch /target/var/log/ansible-compute-provision.log
+    
 ### Finishing up
 d-i finish-install/reboot_in_progress note
 d-i debian-installer/exit/halt boolean false

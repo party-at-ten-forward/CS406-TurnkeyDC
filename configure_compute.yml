@@ -1,0 +1,11 @@
+---
+- name: Configure compute node
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: compute/install_docker
+    - role: compute/install_docker_ansible_modules
+    - role: compute/deploy_nginx
+    - role: compute/checkout

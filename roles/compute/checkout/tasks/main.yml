@@ -1,0 +1,65 @@
+- name: Gather hostname
+  ansible.builtin.command: hostname
+  register: hostname_result
+  changed_when: false
+
+- name: Test internet connectivity (ping google.com)
+  ansible.builtin.command: ping -c 2 google.com
+  register: ping_result
+  ignore_errors: yes
+  changed_when: false
+
+- name: Test connectivity to bootstr-network
+  ansible.builtin.command: ping -c 2 bootstr-network
+  register: bootstr_ping_result
+  ignore_errors: yes
+  changed_when: false
+
+- name: Check Docker installation
+  ansible.builtin.command: docker --version
+  register: docker_version
+  ignore_errors: yes
+  changed_when: false
+
+- name: Check nginx container status
+  community.docker.docker_container_info:
+    name: nginx-test
+  register: nginx_container
+  ignore_errors: yes
+
+- name: Test nginx accessibility on port 8080
+  ansible.builtin.uri:
+    url: http://localhost:8080
+    method: GET
+    status_code: 200
+  register: nginx_test
+  ignore_errors: yes
+  changed_when: false
+
+- name: Get service facts
+  service_facts:
+
+- name: Build checklist content
+  set_fact:
+    compute_checkout_manifest: |
+      Compute Node Checklist
+      ======================
+      Hostname: {{ hostname_result.stdout }}
+      Internet connectivity: {{ 'OK' if ping_result.rc == 0 else 'FAILED' }}
+      bootstr-network connectivity: {{ 'OK' if bootstr_ping_result.rc == 0 else 'FAILED' }}
+      Docker installed: {{ 'OK' if docker_version.rc == 0 else 'FAILED' }}
+      Docker service running: {{ (services['docker.service'].state == 'running') | ternary('YES', 'NO') if 'docker.service' in services else 'UNKNOWN' }}
+      nginx container running: {{ 'YES' if nginx_container.exists and nginx_container.container.State.Status == 'running' else 'NO' }}
+      nginx accessible on port 8080: {{ 'OK' if nginx_test.status == 200 else 'FAILED' }}
+
+- name: Print formatted checklist
+  debug:
+    msg: "{{ compute_checkout_manifest }}"
+
+- name: Write checklist to file
+  copy:
+    dest: /var/log/compute_checkout.txt
+    content: "{{ compute_checkout_manifest }}"
+    owner: root
+    group: root
+    mode: '0644'

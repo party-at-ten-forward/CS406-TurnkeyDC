@@ -1,0 +1,34 @@
+- name: Pull nginx Docker image
+  community.docker.docker_image:
+    name: nginx:latest
+    source: pull
+
+- name: Stop existing nginx container if running
+  community.docker.docker_container:
+    name: nginx-test
+    state: stopped
+  ignore_errors: yes
+
+- name: Remove existing nginx container
+  community.docker.docker_container:
+    name: nginx-test
+    state: absent
+  ignore_errors: yes
+
+- name: Start nginx container
+  community.docker.docker_container:
+    name: nginx-test
+    image: nginx:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "0.0.0.0:8080:80"
+
+- name: Verify nginx container is running
+  community.docker.docker_container_info:
+    name: nginx-test
+  register: nginx_info
+
+- name: Show nginx container status
+  debug:
+    msg: "Nginx container is {{ nginx_info.container.State.Status }} and accessible on all interfaces at port 8080"
