@@ -1,22 +1,32 @@
 # Interface configs
 interface=br0
 bind-interfaces
-# DHCP and DNS
+interface=lo
+listen-address=127.0.0.1
 listen-address=10.10.10.1
+# DHCP and DNS
 dhcp-range=10.10.10.100,10.10.10.200,12h
 dhcp-option=3,10.10.10.1
 dhcp-option=6,10.10.10.1
 domain-needed
 bogus-priv
-domain=home
+local=/home/
+domain=home,10.10.10.0/24
 expand-hosts
 dhcp-authoritative
+
+# Upstream DNS 
+server=192.168.1.1
+server=8.8.8.8
+server=/home/
+
+## Static DNS Entries for boostr-network
+address=/bootstr-network.home/10.10.10.1
+address=/bootstrap.home/10.10.10.1
+
 # TFTP and PXE w/ iPXE
 dhcp-userclass=set:ipxe,iPXE
 dhcp-boot=tag:!ipxe,ipxe.pxe
 dhcp-boot=tag:ipxe,menu.ipxe
 enable-tftp
 tftp-root=/var/lib/tftpboot
-# DNS fix
-server=192.168.1.1
-server=8.8.8.8
