@@ -23,3 +23,31 @@
     name: dnsmasq
     enabled: yes
     state: started
+
+- name: Configure systemd-resolved to work with dnsmasq
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?DNS='
+    line: 'DNS=127.0.0.1'
+    state: present
+    backup: yes
+
+- name: Configure systemd-resolved domains for .home
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?Domains='
+    line: 'Domains=~home'
+    state: present
+
+- name: Disable systemd-resolved stub listener to avoid port 53 conflicts
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?DNSStubListener='
+    line: 'DNSStubListener=no'
+    state: present
+
+- name: Restart systemd-resolved with new configuration
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+    enabled: yes
